@@ -41,6 +41,7 @@ public class Options {
     private Rect crop;
     private boolean control = true;
     private int displayId;
+    private String touchscreenId;
     private String cameraId;
     private Size cameraSize;
     private CameraFacing cameraFacing;
@@ -161,6 +162,10 @@ public class Options {
 
     public int getDisplayId() {
         return displayId;
+    }
+
+    public String getTouchscreenId() {
+        return touchscreenId;
     }
 
     public String getCameraId() {
@@ -424,6 +429,11 @@ public class Options {
                     break;
                 case "display_id":
                     options.displayId = Integer.parseInt(value);
+                    break;
+                case "touchscreen_id":
+                    if (!value.isEmpty()) {
+                        options.touchscreenId = value;
+                    }
                     break;
                 case "show_touches":
                     options.showTouches = Boolean.parseBoolean(value);
