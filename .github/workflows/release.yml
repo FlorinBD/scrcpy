@@ -5,6 +5,16 @@ on:
     inputs:
       name:
         description: 'Version name (default is ref name)'
+        required: false
+
+      build_target:
+        description: 'What to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - server
 
 env:
   # $VERSION is used by release scripts
@@ -51,7 +61,8 @@ jobs:
           name: scrcpy-server
           path: release/work/build-server/server/scrcpy-server
 
-  test-build-scrcpy-server-without-gradle:
+  test-scrcpy-server-without-gradle:
+    if: ${{ inputs.build_target == 'all' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -67,12 +78,13 @@ jobs:
         run: server/build_without_gradle.sh
 
   test-client:
+    if: ${{ inputs.build_target == 'all' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
-        # Same as build-linux-x86_64
+      # Same as build-linux-x86_64
       - name: Install dependencies
         run: |
           sudo apt update
@@ -86,7 +98,7 @@ jobs:
              libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libthai-dev \
              libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
 
-        # SDL3 is not available in Ubuntu yet
+      # SDL3 is not available in Ubuntu yet
       - name: Install SDL3
         run: |
           app/deps/sdl.sh linux native shared
@@ -98,21 +110,22 @@ jobs:
           release/test_client.sh
 
   build-linux-x86_64:
+    if: ${{ inputs.build_target == 'all' }}
     runs-on: ubuntu-22.04
     steps:
       - name: Check architecture
         run: |
-            arch=$(uname -m)
-            if [[ "$arch" != x86_64 ]]
-            then
-                echo "Unexpected architecture: $arch" >&2
-                exit 1
-            fi
+          arch=$(uname -m)
+          if [[ "$arch" != x86_64 ]]
+          then
+              echo "Unexpected architecture: $arch" >&2
+              exit 1
+          fi
 
       - name: Checkout code
         uses: actions/checkout@v6
 
-        # https://wiki.libsdl.org/SDL3/README-linux#build-dependencies
+      # https://wiki.libsdl.org/SDL3/README-linux#build-dependencies
       - name: Install dependencies
         run: |
           sudo apt update
@@ -132,10 +145,10 @@ jobs:
       # upload-artifact does not preserve permissions
       - name: Tar
         run: |
-            cd release/work/build-linux-x86_64
-            mkdir dist-tar
-            cd dist-tar
-            tar -C .. -cvf dist.tar.gz dist/
+          cd release/work/build-linux-x86_64
+          mkdir dist-tar
+          cd dist-tar
+          tar -C .. -cvf dist.tar.gz dist/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -144,6 +157,7 @@ jobs:
           path: release/work/build-linux-x86_64/dist-tar/
 
   build-win32:
+    if: ${{ inputs.build_target == 'all' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -161,10 +175,10 @@ jobs:
       # upload-artifact does not preserve permissions
       - name: Tar
         run: |
-            cd release/work/build-win32
-            mkdir dist-tar
-            cd dist-tar
-            tar -C .. -cvf dist.tar.gz dist/
+          cd release/work/build-win32
+          mkdir dist-tar
+          cd dist-tar
+          tar -C .. -cvf dist.tar.gz dist/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -173,6 +187,7 @@ jobs:
           path: release/work/build-win32/dist-tar/
 
   build-win64:
+    if: ${{ inputs.build_target == 'all' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -190,10 +205,10 @@ jobs:
       # upload-artifact does not preserve permissions
       - name: Tar
         run: |
-            cd release/work/build-win64
-            mkdir dist-tar
-            cd dist-tar
-            tar -C .. -cvf dist.tar.gz dist/
+          cd release/work/build-win64
+          mkdir dist-tar
+          cd dist-tar
+          tar -C .. -cvf dist.tar.gz dist/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -202,23 +217,24 @@ jobs:
           path: release/work/build-win64/dist-tar/
 
   build-macos-aarch64:
+    if: ${{ inputs.build_target == 'all' }}
     runs-on: macos-latest
     steps:
       - name: Check architecture
         run: |
-            arch=$(uname -m)
-            if [[ "$arch" != arm64 ]]
-            then
-                echo "Unexpected architecture: $arch" >&2
-                exit 1
-            fi
+          arch=$(uname -m)
+          if [[ "$arch" != arm64 ]]
+          then
+              echo "Unexpected architecture: $arch" >&2
+              exit 1
+          fi
 
       - name: Checkout code
         uses: actions/checkout@v6
 
       - name: Install dependencies
         run: |
-            brew install meson nasm libiconv zlib automake autoconf libtool
+          brew install meson nasm libiconv zlib automake autoconf libtool
 
       - name: Build
         env:
@@ -233,10 +249,10 @@ jobs:
       # upload-artifact does not preserve permissions
       - name: Tar
         run: |
-            cd release/work/build-macos-aarch64
-            mkdir dist-tar
-            cd dist-tar
-            tar -C .. -cvf dist.tar.gz dist/
+          cd release/work/build-macos-aarch64
+          mkdir dist-tar
+          cd dist-tar
+          tar -C .. -cvf dist.tar.gz dist/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -245,16 +261,17 @@ jobs:
           path: release/work/build-macos-aarch64/dist-tar/
 
   build-macos-x86_64:
+    if: ${{ inputs.build_target == 'all' }}
     runs-on: macos-15-intel
     steps:
       - name: Check architecture
         run: |
-            arch=$(uname -m)
-            if [[ "$arch" != x86_64 ]]
-            then
-                echo "Unexpected architecture: $arch" >&2
-                exit 1
-            fi
+          arch=$(uname -m)
+          if [[ "$arch" != x86_64 ]]
+          then
+              echo "Unexpected architecture: $arch" >&2
+              exit 1
+          fi
 
       - name: Checkout code
         uses: actions/checkout@v6
@@ -266,7 +283,7 @@ jobs:
       - name: Build
         env:
           # the default Xcode (and macOS SDK) version can be found at
-          # <https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md#xcode>
+          # <https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md#xcode>
           #
           # then the minimal supported deployment target of that macOS SDK can be found at
           # <https://developer.apple.com/support/xcode/#minimum-requirements>
@@ -276,10 +293,10 @@ jobs:
       # upload-artifact does not preserve permissions
       - name: Tar
         run: |
-            cd release/work/build-macos-x86_64
-            mkdir dist-tar
-            cd dist-tar
-            tar -C .. -cvf dist.tar.gz dist/
+          cd release/work/build-macos-x86_64
+          mkdir dist-tar
+          cd dist-tar
+          tar -C .. -cvf dist.tar.gz dist/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -288,6 +305,7 @@ jobs:
           path: release/work/build-macos-x86_64/dist-tar/
 
   package-linux-x86_64:
+    if: ${{ inputs.build_target == 'all' }}
     needs:
       - build-scrcpy-server
       - build-linux-x86_64
@@ -311,8 +329,8 @@ jobs:
       # upload-artifact does not preserve permissions
       - name: Detar
         run: |
-            cd release/work/build-linux-x86_64
-            tar xf dist-tar/dist.tar.gz
+          cd release/work/build-linux-x86_64
+          tar xf dist-tar/dist.tar.gz
 
       - name: Package
         run: release/package_client.sh linux-x86_64 tar.gz
@@ -324,6 +342,7 @@ jobs:
           path: release/output/
 
   package-win32:
+    if: ${{ inputs.build_target == 'all' }}
     needs:
       - build-scrcpy-server
       - build-win32
@@ -347,8 +366,8 @@ jobs:
       # upload-artifact does not preserve permissions
       - name: Detar
         run: |
-            cd release/work/build-win32
-            tar xf dist-tar/dist.tar.gz
+          cd release/work/build-win32
+          tar xf dist-tar/dist.tar.gz
 
       - name: Package
         run: release/package_client.sh win32 zip
@@ -360,6 +379,7 @@ jobs:
           path: release/output/
 
   package-win64:
+    if: ${{ inputs.build_target == 'all' }}
     needs:
       - build-scrcpy-server
       - build-win64
@@ -383,8 +403,8 @@ jobs:
       # upload-artifact does not preserve permissions
       - name: Detar
         run: |
-            cd release/work/build-win64
-            tar xf dist-tar/dist.tar.gz
+          cd release/work/build-win64
+          tar xf dist-tar/dist.tar.gz
 
       - name: Package
         run: release/package_client.sh win64 zip
@@ -396,6 +416,7 @@ jobs:
           path: release/output
 
   package-macos-aarch64:
+    if: ${{ inputs.build_target == 'all' }}
     needs:
       - build-scrcpy-server
       - build-macos-aarch64
@@ -419,8 +440,8 @@ jobs:
       # upload-artifact does not preserve permissions
       - name: Detar
         run: |
-            cd release/work/build-macos-aarch64
-            tar xf dist-tar/dist.tar.gz
+          cd release/work/build-macos-aarch64
+          tar xf dist-tar/dist.tar.gz
 
       - name: Package
         run: release/package_client.sh macos-aarch64 tar.gz
@@ -432,6 +453,7 @@ jobs:
           path: release/output/
 
   package-macos-x86_64:
+    if: ${{ inputs.build_target == 'all' }}
     needs:
       - build-scrcpy-server
       - build-macos-x86_64
@@ -455,8 +477,8 @@ jobs:
       # upload-artifact does not preserve permissions
       - name: Detar
         run: |
-            cd release/work/build-macos-x86_64
-            tar xf dist-tar/dist.tar.gz
+          cd release/work/build-macos-x86_64
+          tar xf dist-tar/dist.tar.gz
 
       - name: Package
         run: release/package_client.sh macos-x86_64 tar.gz
@@ -475,6 +497,19 @@ jobs:
       - package-win64
       - package-macos-aarch64
       - package-macos-x86_64
+    if: |
+      always() &&
+      needs.build-scrcpy-server.result == 'success' &&
+      (
+        inputs.build_target == 'server' ||
+        (
+          needs.package-linux-x86_64.result == 'success' &&
+          needs.package-win32.result == 'success' &&
+          needs.package-win64.result == 'success' &&
+          needs.package-macos-aarch64.result == 'success' &&
+          needs.package-macos-x86_64.result == 'success'
+        )
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -487,30 +522,35 @@ jobs:
           path: release/work/build-server/server/
 
       - name: Download release-linux-x86_64
+        if: ${{ inputs.build_target == 'all' }}
         uses: actions/download-artifact@v8
         with:
           name: release-linux-x86_64
           path: release/output/
 
       - name: Download release-win32
+        if: ${{ inputs.build_target == 'all' }}
         uses: actions/download-artifact@v8
         with:
           name: release-win32
           path: release/output/
 
       - name: Download release-win64
+        if: ${{ inputs.build_target == 'all' }}
         uses: actions/download-artifact@v8
         with:
           name: release-win64
           path: release/output/
 
       - name: Download release-macos-aarch64
+        if: ${{ inputs.build_target == 'all' }}
         uses: actions/download-artifact@v8
         with:
           name: release-macos-aarch64
           path: release/output/
 
       - name: Download release-macos-x86_64
+        if: ${{ inputs.build_target == 'all' }}
         uses: actions/download-artifact@v8
         with:
           name: release-macos-x86_64
